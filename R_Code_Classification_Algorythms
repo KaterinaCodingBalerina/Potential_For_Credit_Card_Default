@@ -1,0 +1,78 @@
+#Save the spreadsheet as default.xls (just to make the title shorter)
+#Set the directory to the folder
+library(utils)
+install.packages("gdata")
+library(gdata)
+Defaultcredit = read.xls ("default.xls",sheet="Data", skip=1, header=TRUE)
+Defaultcredit[complete.cases(Defaultcredit), ]
+#Cleaning data: We observe undocumented values for repayment status variables: -2 and 0. 
+#Moreover, fraction of it is 86.5%. Remove observations we will have 4061 from 30000 observations. 
+#The loss is too great so we keep them
+
+#Show graphs to tell the story about the dataset
+library(ggplot2)
+ggplot(Defaultcredit,aes(AGE))+geom_histogram(fill="purple", color="black")+ggtitle("Age Distribution")+theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5),
+        text = element_text(size=20))+xlab("Age")+ylab("NUMBER OF PEOPLE")
+
+ggplot(Defaultcredit,aes(SEX))+geom_histogram(fill="red", color="black", binwidth = 0.5)+ggtitle("Males VS Females")+theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5),
+        text = element_text(size=20))+xlab("SEX")+ylab("NUMBER OF PEOPLE")
+ggplot(Defaultcredit,aes(EDUCATION))+geom_histogram(fill="green", color="black", binwidth=0.7)+ggtitle("Education Levels")+theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5),
+        text = element_text(size=20))+xlab("EDUCATION")+ylab("NUMBER OF PEOPLE")
+ggplot(Defaultcredit,aes(MARRIAGE))+geom_histogram(fill="blue", color="black", binwidth = 0.8)+ggtitle("Marriage Status")+theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5),
+        text = element_text(size=20))+xlab("MARRIAGE")+ylab("NUMBER OF PEOPLE") 
+
+#We can sue Shiny for this plot just to show we used the tool (Should be super easy)
+ggplot(Defaultcredit,aes(LIMIT_BAL,AGE, color=AGE))+geom_point()+ggtitle("Credit Limit Correlation to Age")+xlab("BALANCE LIMIT")
+
+library(caret)
+Defaultcredit=Defaultcredit
+
+normalize <- function(x) {return ((x - min(x)) / (max(x) - min(x))) }
+Defaultcredit <- as.data.frame(lapply(Defaultcredit, normalize))
+Defaultcredit$default.payment.next.month= as.factor(Defaultcredit$default.payment.next.month)
+training=Defaultcredit[seq(1,nrow(Defaultcredit),2),]
+testing=Defaultcredit[seq(2,nrow(Defaultcredit),2),]
+
+#KNN Model
+model=train(default.payment.next.month ~.,training,method="knn")
+predictedDefault=predict(model,testing)
+model$finalModel
+sum(predictedDefault==testing$default.payment.next.month)/nrow(testing)
+
+#Boot strap - Random Forrest - runs FOREVER, had to quit, never succeeded
+#Flexible Discriminant Analysis
+model=train(default.payment.next.month ~.,training,method="fda")
+predictedDefault=predict(model,testing)
+model$finalModel
+sum(predictedDefault==testing$default.payment.next.month)/nrow(testing)
+
+#Logistic regression
+model=train(default.payment.next.month ~.,training,method="glm")
+predictedDefault=predict(model,testing)
+model$finalModel
+sum(predictedDefault==testing$default.payment.next.month)/nrow(testing)
+
+#Decision Trees
+model=train(default.payment.next.month ~.,training,method="rpart")
+predictedDefault=predict(model,testing)
+model$finalModel
+sum(predictedDefault==testing$default.payment.next.month)/nrow(testing)
+
+#Neural networks
+model=train(default.payment.next.month ~.,training,method="nnet")
+predictedDefault=predict(model,testing)
+model$finalModel
+sum(predictedDefault==testing$default.payment.next.month)/nrow(testing)
+
+#Gradient boosting
+model=train(default.payment.next.month ~.,training,method="gbm")
+predictedDefault=predict(model,testing)
+model$finalModel
+sum(predictedDefault==testing$default.payment.next.month)/nrow(testing)
+
+#If someone can figure out how to plot all those models - it would be perfect
+plot(model$finalModel)
