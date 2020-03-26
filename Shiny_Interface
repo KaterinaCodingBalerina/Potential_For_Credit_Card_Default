@@ -1,0 +1,17 @@
+library(shiny)
+shinyUI(fluidPage(
+  headerPanel("my first shiny app"),
+  sidebarPanel(
+    selectInput("X_axis", "X axis:",
+    list("Ozone"="Ozone",
+         "Solar.R"="Solar.R",
+         "Temp"="Temp",
+         "Wind"="Wind"))),
+  selectInput("Y_axis", "Y axis:",
+              list("Ozone"="Ozone",
+                   "Solar.R"="Solar.R",
+                   "Temp"="Temp",
+                   "Wind"="Wind"))),
+  
+  plotOutput("airPlot")
+   ))
